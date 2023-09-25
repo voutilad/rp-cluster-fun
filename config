@@ -1,0 +1,8 @@
+#!/bin/sh
+# Redpanda cluster config
+MEM="${MEM:-2G}"
+CPU="${CPU:-1}"
+NET="${NET:-rpnet}"
+PREFIX="${PREFIX:-redpanda}"
+IMAGE="${IMAGE:-docker.redpanda.com/redpandadata/redpanda:v23.2.9}"
+LOG_LEVEL="${LOG_LEVEL:-info}"
