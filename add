@@ -1,0 +1,58 @@
+#!/bin/sh
+# Add a member to the cluster, either by id or an auto chosen one
+set -e
+
+# Redpanda container resources
+MEM="${MEM:-2G}"
+CPU="${CPU:-1}"
+NET="${NET:-rpnet}"
+PREFIX="${PREFIX:-redpanda}"
+IMAGE="${IMAGE:-docker.redpanda.com/redpandadata/redpanda:v23.2.8}"
+LOG_LEVEL="${LOG_LEVEL:-info}"
+
+# allow for auto guessing a broker id
+ID="$1"
+if [ -z "${ID}" ]; then
+    ID=$(docker ps --filter "name=redpanda*" --format '{{.Names}}' \
+               | awk -F'-' '{ print $2 }' \
+               | sort -nr \
+               | head -n1)
+    if [ -z "${ID}" ]; then
+        echo "is redpanda running?" 2>&1
+        exit 1
+    fi
+fi
+if [ "${ID}" -gt 5 ]; then
+    echo "due to tcp port limitations, broker id's must be within the range [1, 5]" 1>&2
+    exit 1
+fi
+
+NAME="${PREFIX}-${ID}"
+echo "creating ${NAME}"
+
+if docker run --rm -it -d \
+          -p "${ID}9644:9644" -p "${ID}9092:${ID}9092" \
+          --name "${NAME}" --network "${NET}" \
+          "${IMAGE}" \
+          redpanda start \
+          --node-id "${ID}"\
+          --kafka-addr "internal://0.0.0.0:9092,external://0.0.0.0:${ID}9092" \
+          --advertise-kafka-addr "internal://${NAME}:9092,external://localhost:${ID}9092" \
+          --pandaproxy-addr "internal://0.0.0.0:8082,external://localhost:${ID}8082" \
+          --advertise-pandaproxy-addr "internal://${NAME}:8082,external://localhost:${ID}8082" \
+          --schema-registry-addr "internal://0.0.0.0:8081,eternal://0.0.0.0:${ID}8081" \
+          --rpc-addr "${NAME}:33145" \
+          --advertise-rpc-addr "${NAME}:33145" \
+          --smp "${CPU}" \
+          --memory "${MEM}" \
+          --mode dev-container \
+          --default-log-level "${LOG_LEVEL}" \
+          --seeds "${PREFIX}-1:33145,${PREFIX}-2:33145,${PREFIX}-3:33145" \
+          > /dev/null ; then
+    echo "launched ${PREFIX}-${ID}"
+    # delay a tad
+    sleep 3
+else
+    echo "failed to start ${PREFIX}-${ID}"
+    exit 1
+fi

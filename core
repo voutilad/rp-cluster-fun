@@ -1,0 +1,59 @@
+#!/bin/sh
+# Spin up the core cluster (3 nodes)
+set -e
+
+# Redpanda container resources
+MEM="${MEM:-2G}"
+CPU="${CPU:-1}"
+NET="${NET:-rpnet}"
+PREFIX="${PREFIX:-redpanda}"
+IMAGE="${IMAGE:-docker.redpanda.com/redpandadata/redpanda:v23.2.8}"
+LOG_LEVEL="${LOG_LEVEL:-info}"
+
+# Create docker network if required
+if ! docker network ls -q -f "name=${NET}" | grep '.*' > /dev/null; then
+    echo "creating docker network ${NET}"
+    docker network create "${NET}" > /dev/null
+fi
+
+# Stop any running instances
+for i in 1 2 3; do
+    if docker stop -t 2 "${PREFIX}-${i}" 1>/dev/null 2>/dev/null; then
+        echo "stopped ${PREFIX}-${i}"
+    fi
+done
+
+# Start deploying Redpanda nodes. We start counting at 1 ;)
+for i in 1 2 3; do
+    NAME="${PREFIX}-${i}"
+    if [ "${i}" -gt 1 ]; then
+        SEEDS="--seeds ${PREFIX}-1:33145"
+    else
+        SEEDS=
+    fi
+    if docker run --rm -it -d \
+           -p "${i}9644:9644" -p "${i}9092:${i}9092" \
+           --name "${NAME}" --network "${NET}" \
+           "${IMAGE}" \
+           redpanda start \
+           --node-id "${i}" \
+           --kafka-addr "internal://0.0.0.0:9092,external://0.0.0.0:${i}9092" \
+           --advertise-kafka-addr "internal://${NAME}:9092,external://localhost:${i}9092" \
+           --pandaproxy-addr "internal://0.0.0.0:8082,external://localhost:${i}8082" \
+           --advertise-pandaproxy-addr "internal://${NAME}:8082,external://localhost:${i}8082" \
+           --schema-registry-addr "internal://0.0.0.0:8081,eternal://0.0.0.0:${i}8081" \
+           --rpc-addr "${NAME}:33145" \
+           --advertise-rpc-addr "${NAME}:33145" \
+           --smp "${CPU}" \
+           --memory "${MEM}" \
+           --mode dev-container \
+           --default-log-level "${LOG_LEVEL}" \
+           "${SEEDS}" > /dev/null ; then
+        echo "launched ${PREFIX}-${i}"
+        # delay a tad
+        sleep 3
+    else
+        echo "failed to start ${PREFIX}-${i}"
+        exit 1
+    fi
+done
