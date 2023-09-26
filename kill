@@ -2,10 +2,7 @@
 # Decommission a cluster member by id
 set -e
 
-NET="${NET:-rpnet}"
-PREFIX="${PREFIX:-redpanda}"
-IMAGE="${IMAGE:-docker.redpanda.com/redpandadata/redpanda:v23.2.8}"
-ID="$1"
+. ./config
 
 if [ -z "${ID}" ]; then
     echo "usage: stop.sh [1,2,3,4,5]" 1>&2
@@ -20,14 +17,15 @@ if docker run --rm -it --name "rp-stop" \
        --network "${NET}" \
        --entrypoint rpk \
        "${IMAGE}" \
-       redpanda admin brokers decommission "${ID}" \
-       "--hosts=${PREFIX}-1:9644,${PREFIX}-2:9644,${PREFIX}-3:9644"; then
+       redpanda admin brokers decommission "${ID}" --force \
+       "--hosts=${PREFIX}-1:9644,${PREFIX}-2:9644,${PREFIX}-3:9644" > /dev/null; then
     printf "waiting for %s-%d to decommission" "${PREFIX}" "${ID}"
     while ! docker run --rm -it --name "rp-status" \
            --network "${NET}" \
            --entrypoint rpk \
            "${IMAGE}" \
-           rpk redpanda admin brokers decommission-status "${ID}"; do
+           redpanda admin brokers decommission-status "${ID}" \
+           "--hosts=${PREFIX}-1:9644,${PREFIX}-2:9644,${PREFIX}-3:9644" > /dev/null ; do
         printf "."
         sleep 1
     done

@@ -2,19 +2,13 @@
 # Add a member to the cluster, either by id or an auto chosen one
 set -e
 
-# Redpanda container resources
-MEM="${MEM:-2G}"
-CPU="${CPU:-1}"
-NET="${NET:-rpnet}"
-PREFIX="${PREFIX:-redpanda}"
-IMAGE="${IMAGE:-docker.redpanda.com/redpandadata/redpanda:v23.2.8}"
-LOG_LEVEL="${LOG_LEVEL:-info}"
+. ./config
 
 # allow for auto guessing a broker id
 ID="$1"
 if [ -z "${ID}" ]; then
     ID=$(docker ps --filter "name=redpanda*" --format '{{.Names}}' \
-               | awk -F'-' '{ print $2 }' \
+               | awk -F'-' '{ print $2 + 1 }' \
                | sort -nr \
                | head -n1)
     if [ -z "${ID}" ]; then

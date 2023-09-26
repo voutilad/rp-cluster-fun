@@ -2,13 +2,7 @@
 # Spin up the core cluster (3 nodes)
 set -e
 
-# Redpanda container resources
-MEM="${MEM:-2G}"
-CPU="${CPU:-1}"
-NET="${NET:-rpnet}"
-PREFIX="${PREFIX:-redpanda}"
-IMAGE="${IMAGE:-docker.redpanda.com/redpandadata/redpanda:v23.2.8}"
-LOG_LEVEL="${LOG_LEVEL:-info}"
+. ./config
 
 # Create docker network if required
 if ! docker network ls -q -f "name=${NET}" | grep '.*' > /dev/null; then

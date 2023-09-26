@@ -2,7 +2,7 @@
 # Stop all brokers
 set -e
 
-PREFIX="${PREFIX:-redpanda}"
+. ./config
 
 for name in $(docker ps --filter "name=${PREFIX}*" --format '{{.Names}}'); do
     if docker stop "${name}" -t 30 > /dev/null; then
