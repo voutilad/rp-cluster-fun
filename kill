@@ -3,7 +3,7 @@
 set -e
 
 . ./config
-
+ID="$1"
 if [ -z "${ID}" ]; then
     echo "usage: stop.sh [1,2,3,4,5]" 1>&2
     exit 1
@@ -13,19 +13,28 @@ if [ "${ID}" -gt 5 ] || [ "${ID}" -lt 1 ]; then
     exit 1
 fi
 
+# find the node id from the "broker id" we use in naming the container
+NODE_ID=$(docker run --rm -it --name "rp-find-broker" \
+                 --network "${NET}" --entrypoint rpk "${IMAGE}" \
+                 "-Xbrokers=${PREFIX}-1:9092,${PREFIX}-2:9092,${PREFIX}-3:9092" \
+                 cluster info -b \
+              | grep "${PREFIX}-${ID}" | tr -d '*' | awk '{ print $1 }')
+
 if docker run --rm -it --name "rp-stop" \
        --network "${NET}" \
        --entrypoint rpk \
        "${IMAGE}" \
-       redpanda admin brokers decommission "${ID}" --force \
+       redpanda admin brokers decommission "${NODE_ID}" \
        "--hosts=${PREFIX}-1:9644,${PREFIX}-2:9644,${PREFIX}-3:9644" > /dev/null; then
-    printf "waiting for %s-%d to decommission" "${PREFIX}" "${ID}"
+    printf "waiting for %s (node id %d) to decommission" "${PREFIX}-${ID}" "${NODE_ID}"
+    sleep 0.5
     while ! docker run --rm -it --name "rp-status" \
            --network "${NET}" \
            --entrypoint rpk \
            "${IMAGE}" \
-           redpanda admin brokers decommission-status "${ID}" \
-           "--hosts=${PREFIX}-1:9644,${PREFIX}-2:9644,${PREFIX}-3:9644" > /dev/null ; do
+           redpanda admin brokers decommission-status "${NODE_ID}" \
+           "--hosts=${PREFIX}-1:9644,${PREFIX}-2:9644,${PREFIX}-3:9644" \
+          | grep "decommissioned successfully" > /dev/null; do
         printf "."
         sleep 1
     done

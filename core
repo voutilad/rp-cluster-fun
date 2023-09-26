@@ -25,12 +25,11 @@ for i in 1 2 3; do
     else
         SEEDS=
     fi
-    if docker run --rm -it -d \
+    if docker run -it --rm -d \
            -p "${i}9644:9644" -p "${i}9092:${i}9092" \
            --name "${NAME}" --network "${NET}" \
            "${IMAGE}" \
            redpanda start \
-           --node-id "${i}" \
            --kafka-addr "internal://0.0.0.0:9092,external://0.0.0.0:${i}9092" \
            --advertise-kafka-addr "internal://${NAME}:9092,external://localhost:${i}9092" \
            --pandaproxy-addr "internal://0.0.0.0:8082,external://localhost:${i}8082" \
