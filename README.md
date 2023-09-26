@@ -18,6 +18,11 @@ You need:
 
 ## The Scripts
 
+### `config`
+
+Contains default config properties. You can either modify this or set
+the appropriate environment variables to override the defaults.
+
 ### `core`
 
 Starts a 3-node Redpanda cluster, with broker containers named:
