@@ -19,6 +19,12 @@ NODE_ID=$(docker run --rm -it --name "rp-find-broker" \
                  "-Xbrokers=${PREFIX}-1:9092,${PREFIX}-2:9092,${PREFIX}-3:9092" \
                  cluster info -b \
               | grep "${PREFIX}-${ID}" | tr -d '*' | awk '{ print $1 }')
+if [ -z "${NODE_ID}" ]; then
+    echo "failed to find broker ${PREFIX}-${ID}" >&2
+    exit 1
+fi
+
+echo "killing ${PREFIX}-${ID} (node id ${NODE_ID})"
 
 if docker run --rm -it --name "rp-stop" \
        --network "${NET}" \

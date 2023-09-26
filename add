@@ -4,17 +4,18 @@ set -e
 
 . ./config
 
-# allow for auto guessing a broker id
+# allow for auto guessing a "broker" id (i.e. 'N' in 'redpanda-N')
 ID="$1"
 if [ -z "${ID}" ]; then
     ID=$(docker ps --filter "name=redpanda*" --format '{{.Names}}' \
-               | awk -F'-' '{ print $2 + 1 }' \
-               | sort -nr \
-               | head -n1)
+               | awk -F'-' '{ print $2 }' \
+               | sort -n \
+               | awk -v x=1 '{if ($1 != x) {exit;} x++; last=$1;} END {print last + 1;}')
     if [ -z "${ID}" ]; then
         echo "is redpanda running?" 2>&1
         exit 1
     fi
+    echo "trying to add ${PREFIX}-${ID} to cluster"
 fi
 if [ "${ID}" -gt 5 ]; then
     echo "due to tcp port limitations, broker id's must be within the range [1, 5]" 1>&2
@@ -42,9 +43,7 @@ if docker run --rm -it -d \
           --default-log-level "${LOG_LEVEL}" \
           --seeds "${PREFIX}-1:33145,${PREFIX}-2:33145,${PREFIX}-3:33145" \
           > /dev/null ; then
-    echo "launched ${PREFIX}-${ID}"
-    # delay a tad
-    sleep 3
+    echo "launching ${PREFIX}-${ID}"
 else
     echo "failed to start ${PREFIX}-${ID}"
     exit 1
