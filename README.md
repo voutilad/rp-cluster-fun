@@ -57,6 +57,12 @@ Decommission and remove a broker by it's _broker id_. (See `add` for details.)
 Will us `rpk` to decommission the node and wait for it to complete
 before returning.
 
+### `kill [broker id]`
+
+As the name implies, kill it with fire. Will *not* decommission the
+node in advance, so this can simulate a catastrophic failure of a
+broker.
+
 ### `stop-all`
 
 Bring the cluster down via `docker stop`.

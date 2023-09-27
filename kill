@@ -1,0 +1,26 @@
+#!/bin/sh
+# Violently kill a Redpanda broker
+set -e
+
+. ./config
+
+ID="$1"
+if [ -z "${ID}" ]; then
+    echo "usage: kill [broker id]" 2>&1
+    exit 1
+fi
+
+if ! docker ps --filter "name=${PREFIX}-*" --format '{{.Names}}' \
+        | grep "${PREFIX}-${ID}" > /dev/null; then
+    echo "no broker named ${PREFIX}-${ID} found" 2>&1
+    exit 1
+fi
+
+read -r -p "are you sure you want to kill broker ${PREFIX}-${ID}? " CONFIRM
+if ! echo "${CONFIRM}" | grep "^[Yy]" > /dev/null; then
+    echo "Good idea, let's not."
+    exit 0
+fi
+
+echo "hold onto your butts..."
+docker kill -s SIGINT "${PREFIX}-${ID}" > /dev/null
