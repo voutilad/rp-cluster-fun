@@ -1,0 +1,45 @@
+#!/bin/sh
+set -e
+
+. ./config
+
+CMD="$1"
+
+usage() {
+    echo "usage: console [start|stop]" 2>&1
+    exit 1
+}
+
+start() {
+    if ! docker run --rm -it -d \
+              --name "${PREFIX}-console" \
+              -p "8080:${CONSOLE_PORT}" \
+              --network "${NET}" \
+              --env "KAFKA_BROKERS=${PREFIX}-1:9092,${PREFIX}-2:9092,${PREFIX}-3:9092" \
+              --env "REDPANDA_ADMINAPI_ENABLED=true" \
+              --env "REDPANDA_ADMINAPI_URLS=http://${PREFIX}-1:9644,http://${PREFIX}-2:9644,http://${PREFIX}-3:9644" \
+              "${CONSOLE_IMAGE}" > /dev/null 2>&1; then
+        echo "failed to start redpanda console; is it already running?"
+        exit 1
+    fi
+    echo "Redpanda console started: http://localhost:8080"
+    exit 0
+}
+
+stop () {
+    docker stop "${PREFIX}-console" > /dev/null 2>&1
+    echo "Redpanda console stopped."
+    exit 0
+}
+
+if [ -z "${CMD}" ]; then
+    usage
+fi
+
+CMD=$(echo "${CMD}" | tr '[:upper:]' '[:lower:]')
+
+case "${CMD}" in
+    "start") start ;;
+    "stop") stop ;;
+    *) usage ;;
+esac

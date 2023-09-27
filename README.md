@@ -66,3 +66,7 @@ broker.
 ### `stop-all`
 
 Bring the cluster down via `docker stop`.
+
+### `console [start|stop]`
+
+Spin up an instance of [Redpanda Console](https://docs.redpanda.com/current/reference/console/).
