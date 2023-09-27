@@ -3,7 +3,7 @@ set -e
 
 . ./config
 
-docker run -it --rm \
+docker run -i --rm \
        --name "${PREFIX}-rpk" \
        --network "${NET}" \
        --entrypoint rpk \
