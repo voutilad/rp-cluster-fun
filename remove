@@ -5,11 +5,11 @@ set -e
 . ./config
 ID="$1"
 if [ -z "${ID}" ]; then
-    echo "usage: stop.sh [1,2,3,4,5]" 1>&2
+    echo "usage: remove [1,2,3,4,5]" 1>&2
     exit 1
 fi
 if [ "${ID}" -gt 5 ] || [ "${ID}" -lt 1 ]; then
-    echo "usage: stop.sh [1,2,3,4,5]" 1>&2
+    echo "usage: remove [1,2,3,4,5]" 1>&2
     exit 1
 fi
 
