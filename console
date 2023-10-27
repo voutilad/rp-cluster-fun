@@ -16,6 +16,8 @@ start() {
               -p "8080:${CONSOLE_PORT}" \
               --network "${NET}" \
               --env "KAFKA_BROKERS=${PREFIX}-1:9092,${PREFIX}-2:9092,${PREFIX}-3:9092" \
+              --env "KAFKA_SCHEMAREGISTRY_ENABLED=true" \
+              --env "KAFKA_SCHEMAREGISTRY_URLS=http://${PREFIX}-1:8081,http://${PREFIX}-2:8081,http://${PREFIX}-3:8081" \
               --env "REDPANDA_ADMINAPI_ENABLED=true" \
               --env "REDPANDA_ADMINAPI_URLS=http://${PREFIX}-1:9644,http://${PREFIX}-2:9644,http://${PREFIX}-3:9644" \
               "${CONSOLE_IMAGE}" > /dev/null 2>&1; then
