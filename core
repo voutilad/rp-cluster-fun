@@ -30,6 +30,7 @@ for i in 1 2 3; do
 
     if docker run -it --rm -d \
            -p "${i}9644:9644" -p "${i}9092:${i}9092" \
+           -p "${i}8081:${i}8081" -p "${i}8082:${i}8082" \
            --name "${NAME}" --network "${NET}" \
            "${IMAGE}" \
            redpanda start \
