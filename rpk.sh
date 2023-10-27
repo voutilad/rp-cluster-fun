@@ -4,7 +4,7 @@ set -e
 . ./config
 
 docker run -i --rm \
-       --name "${PREFIX}-rpk" \
+       --name "${PREFIX}-rpk-$(date '+%N')" \
        --network "${NET}" \
        --entrypoint rpk \
        "${IMAGE}" \
