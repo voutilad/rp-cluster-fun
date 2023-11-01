@@ -8,6 +8,7 @@ set -e
 ID="$1"
 if [ -z "${ID}" ]; then
     ID=$(docker ps --filter "name=${PREFIX}*" --format '{{.Names}}' \
+               | grep -v "console" \
                | awk -F'-' '{ print $2 }' \
                | sort -n \
                | awk -v x=1 '{if ($1 != x) {exit;} x++; last=$1;} END {print last + 1;}')
